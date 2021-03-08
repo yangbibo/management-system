@@ -13,7 +13,7 @@ const proSettings: DefaultSettings = {
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: '文鸟食堂管理后台',
+  title: '文鸟食堂系统',
   pwa: false,
   iconfontUrl: '',
 };
