@@ -1,4 +1,10 @@
 import request from '@/utils/request';
+//查询人员列表
+export async function queryUserRule(params?:any) {
+  return request('/api/rule', {
+    params,
+  });
+}
 //查询
 export async function queryRule(params?:any) {
   return request('/api/rule', {

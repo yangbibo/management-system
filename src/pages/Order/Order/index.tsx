@@ -1,7 +1,8 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
-import { Card, Divider,Popconfirm,message, InputNumber,Modal, Input,Row,Col,Button,Form } from 'antd';
-import {queryRule,deleteRule,markRule,chargeBackRule,exportRule,alarmRule,cancleRule} from './service';
+import moment from 'moment';
+import { Card, Divider,Popconfirm,message, InputNumber,Modal, Input,Row,Col,Button,Form, DatePicker, Select, Table } from 'antd';
+import {queryRule,deleteRule,markRule,chargeBackRule,exportRule,alarmRule,cancleRule,queryUserRule} from './service';
 
 export type TableListItem = {
   id: number;//订单编号
@@ -12,9 +13,9 @@ export type TableListItem = {
   inviteUser: string;//推广员
   dinnerCount: number;//剩余配送次数
   dates: string[];//配送日期
-  status: '用餐中' | '取消' | '待支付';//状态
-  createdAt: number;//创建时间
-  payAt: number;//付款时间
+  status: string;//'用餐中' | '取消' | '待支付';//状态
+  createdAt: string;//创建时间
+  payAt: string;//付款时间
   priceRMB: number;//商品价格
   deliveryRMB: number;//配送费
   comment: string;//评论
@@ -22,11 +23,12 @@ export type TableListItem = {
 
 const Index = () => {
   const [form] = Form.useForm();
-  const [list, setList] = useState([]);
-  const [pageInfo,setPageInfo] = useState({page:1,pageSize:10,total:0});
-  const [filterCondition,setFilterCondition] = useState({keyword:'',start_date:'',endDate:'',inviteUser:''});//筛选条件
+  const [list, setList] = useState<TableListItem[]>([]);
+  const [pageInfo,setPageInfo] = useState({page:1,pageSize:1,total:0});
+  const [filterCondition,setFilterCondition] = useState({keyword:'',start_date:'',end_date:'',inviteUser:''});//筛选条件
   const [chargeBackInfo,setChargeBackInfo] = useState<{visible:boolean,info?:{id:number,money:number}}>({visible:false})//退单弹窗
   const [markInfo,setMarkInfo] = useState<{visible:boolean,info?:{id:number,comment:string}}>({visible:false})//备注弹窗
+  const [userList,setUserList] = useState<{id:number,name:string}[]>([])
   const columns = [
     {
       title: '订单编号',
@@ -116,15 +118,20 @@ const Index = () => {
               >
                 <span style={{ color: 'red' }}>删除</span>
               </Popconfirm>
-              
-              <Divider />
-              <span style={{ color: '#1890ff' }}>备注</span>
+              <Divider type='vertical'/>
+              <span style={{ color: '#1890ff',cursor:'pointer' }} 
+                onClick={()=>{setMarkInfo({visible:true,info:{id:record.id,comment:record.comment}})}}
+              >备注</span>
             </Fragment>
           case '待支付':
             return <Fragment>
-              <span style={{ color: 'red' }}>退单</span>
-              <Divider />
-              <span style={{ color: '#1890ff' }}>备注</span>
+              <span style={{ color: 'red',cursor:'pointer' }} 
+                onClick={()=>{setChargeBackInfo({visible:true,info:{id:record.id,money:record.priceRMB+record.deliveryRMB}})}}
+              >退单</span>
+              <Divider type='vertical'/>
+              <span style={{ color: '#1890ff',cursor:'pointer' }} 
+                onClick={()=>{setMarkInfo({visible:true,info:{id:record.id,comment:record.comment}})}}
+              >备注</span>
             </Fragment>
           default:
             return <Fragment>
@@ -134,9 +141,11 @@ const Index = () => {
               >
                 <span style={{ color: '#1890ff' }}>提醒支付</span>
               </Popconfirm>
-              <Divider />
-              <span style={{ color: '#1890ff' }}>备注</span>
-              <Divider />
+              <Divider type='vertical'/>
+              <span style={{ color: '#1890ff',cursor:'pointer' }} 
+                onClick={()=>{setMarkInfo({visible:true,info:{id:record.id,comment:record.comment}})}}
+              >备注</span>
+              <Divider type='vertical'/>
               <Popconfirm
                 title='确定要取消此订单吗？'
                 onConfirm={()=>{cancelRequest(record.id)}}
@@ -150,8 +159,21 @@ const Index = () => {
   ]
   useEffect(() => {
     getList();
+    getUserList();
   },[])
-  const getList = async (startPage?:boolean) => {
+  useEffect(()=>{
+    getList(false);
+  },[pageInfo])
+  const getUserList = async () => {
+    let list = [
+      {id:1,name:'zahngsan'},
+      {id:2,name:'lisi'},
+      {id:3,name:'wangwu'}
+    ]
+    // const list = await queryUserRule();
+    setUserList(list)
+  }
+  const getList = async (startPage = true) => {
     let params = {
       ...filterCondition,
       page:pageInfo.page,
@@ -160,8 +182,41 @@ const Index = () => {
     if(startPage){
       params.page = 1;
     }
-    //
-    const list =await queryRule(params);
+    const list = [
+      {
+        id: 121,//订单编号
+        user: { icon: '', id: 1222, name: 'lietou', phone: '12222222' },
+        userName: 'sansan',//姓名
+        telNumber: 13122220090,//手机
+        detailInfo: 'wenzhijie',//地址
+        inviteUser: 'zhangchongming',//推广员
+        dinnerCount: 5,
+        dates: ['8-22','1-7'],
+        status: '待支付',
+        createdAt: '2020-11-12',
+        payAt: '2020-12-11',
+        priceRMB: 16,
+        deliveryRMB: 3,
+        comment: 'zhishipinglun',
+      },
+      {
+        id: 99,//订单编号
+        user: { icon: '', id: 1222, name: 'lietou', phone: '12222222' },
+        userName: 'sansan',//姓名
+        telNumber: 13122220090,//手机
+        detailInfo: 'wenzhijie',//地址
+        inviteUser: 'zhangchongming',//推广员
+        dinnerCount: 5,
+        dates: ['8-22','1-7'],
+        status: '取消',
+        createdAt: '2020-11-12',
+        payAt: '2020-12-11',
+        priceRMB: 16,
+        deliveryRMB: 3,
+        comment: 'zhishipinglun',
+      }
+    ]
+    // const list =await queryRule(params);
     setList(list);
     // setPageInfo()
   }
@@ -224,6 +279,7 @@ const Index = () => {
       getList();
     }
   }
+  //导出
   const exportRequest = async() => {
     let params = {
       ...filterCondition
@@ -233,8 +289,32 @@ const Index = () => {
       console.log('执行导出操作')
     }
   }
-  const onFinish = (values:any) => {
-    console.log(values)
+  //重置
+  const onReset = () => {
+    form.resetFields();
+    setFilterCondition({keyword:'',start_date:'',end_date:'',inviteUser:''})
+  }
+  //翻页
+  const handleTableChange = (pagination:any) => {
+    setPageInfo({
+      page:pagination.current,
+      pageSize:pagination.pageSize,
+      total:pageInfo.total
+    })
+  }
+  const onFormChange = (ChangeValue:any,values:any) => {
+    console.log(ChangeValue,values)
+    let filterCondition = {
+      keyword:values.id as string,
+      start_date:values.date?moment(values.date[0]).format('YYYYMMDD'):'',
+      end_date:values.date?moment(values.date[1]).format('YYYYMMDD'):'',
+      inviteUser:values.user as string
+    }
+    setFilterCondition(filterCondition);
+  }
+  const onFinish = () => {
+    console.log(filterCondition);
+    getList();
   }
   return <PageHeaderWrapper title={false}>
     <Card>
@@ -244,28 +324,35 @@ const Index = () => {
             layout='inline'
             form={form}
             onFinish={onFinish}
+            onValuesChange={onFormChange}
+            style={{marginBottom:10}}
           >
             <Form.Item name='id' label='查询订单'>
               <Input placeholder='请输入订单ID或手机号'/>
             </Form.Item>
             <Form.Item name='date' label='查询范围'>
-              
+              <DatePicker.RangePicker format='YYYY-MM-DD'/>
             </Form.Item>
             <Form.Item name='user' label='推广员'>
-
+              <Select style={{width:160}}>
+                {
+                  userList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+                }
+              </Select>
             </Form.Item>
             <Form.Item><Button htmlType='submit'>查询</Button></Form.Item>
-            <Form.Item><Button htmlType='reset'>重置</Button></Form.Item>
+            <Form.Item><Button htmlType='button' onClick={onReset}>重置</Button></Form.Item>
           </Form>
         </Col>
         <Col span={2}><Button onClick={exportRequest}>导出</Button></Col>
       </Row>
+      <Table rowKey='id' columns={columns} dataSource={list} pagination={{current:pageInfo.page,pageSize:pageInfo.pageSize}} onChange={handleTableChange}/>
     </Card>
     <Modal
       title='退单'
       visible={chargeBackInfo.visible}
       onCancel={()=>{setChargeBackInfo({visible:false})}}
-      onOk={()=>{chargeBackRequest}}
+      onOk={chargeBackRequest}
     >
       退款金额：<InputNumber value={chargeBackInfo.info?.money} onChange={handleChangeMoney}/>
     </Modal>
@@ -273,7 +360,7 @@ const Index = () => {
       title='修改备注'
       visible={markInfo.visible}
       onCancel={()=>{setMarkInfo({visible:false})}}
-      onOk={()=>{commentRequest}}
+      onOk={commentRequest}
     >
       退款金额：<Input.TextArea value={markInfo.info?.comment} onChange={handleChangeComment}/>
     </Modal>
